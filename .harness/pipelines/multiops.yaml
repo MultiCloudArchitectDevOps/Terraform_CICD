@@ -28,11 +28,25 @@ pipeline:
                   spec:
                     shell: Sh
                     image: hashicorp/terraform:1.8.5
+                    envVariables:
+                      AWS_ACCESS_KEY_ID: <+secrets.getValue("AWS_ACCESS_KEY_ID")>
+                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("AWS_SECRET_ACCESS_KEY")>
+                      AWS_DEFAULT_REGION: us-east-1
                     command: |
                       terraform version
                       pwd
                       ls -la
-                      terraform init
+                      find . -name "*.tf"
+                      terraform init -input=false
+              - step:
+                  type: Run
+                  name: Terraform Validate
+                  identifier: terraform_validate
+                  spec:
+                    shell: Sh
+                    image: hashicorp/terraform:1.8.5
+                    command: |
+                      terraform validate
               - step:
                   type: Run
                   name: Terraform Plan
@@ -67,7 +81,7 @@ pipeline:
                   spec:
                     approvalMessage: |
                       Terraform Plan completed successfully.
-                      Please review the plan and approve to continue.
+                      Please review the Terraform plan and approve to continue.
                     includePipelineExecutionHistory: true
                     approvers:
                       minimumCount: 1
@@ -89,8 +103,12 @@ pipeline:
                   spec:
                     shell: Sh
                     image: hashicorp/terraform:1.8.5
+                    envVariables:
+                      AWS_ACCESS_KEY_ID: <+secrets.getValue("AWS_ACCESS_KEY_ID")>
+                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("AWS_SECRET_ACCESS_KEY")>
+                      AWS_DEFAULT_REGION: us-east-1
                     command: |
-                      terraform init
+                      terraform init -input=false
               - step:
                   type: Run
                   name: Terraform Apply
