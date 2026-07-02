@@ -3,11 +3,10 @@ pipeline:
   identifier: terrafom
   projectIdentifier: terraformprod
   orgIdentifier: default
-  tags: {}
   stages:
     - stage:
-        name: Terraform_Deploy
-        identifier: Terraform_Deploy
+        name: Terraform_Plan
+        identifier: Terraform_Plan
         type: CI
         spec:
           cloneCodebase: false
@@ -36,6 +35,42 @@ pipeline:
                       AWS_DEFAULT_REGION: us-east-1
                     command: |
                       terraform plan -out=tfplan
+          platform:
+            os: Linux
+            arch: Arm64
+          runtime:
+            type: Cloud
+            spec: {}
+    - stage:
+        name: Approval
+        identifier: Approval
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: HarnessApproval
+                  name: Approve Terraform Apply
+                  identifier: approve_apply
+                  timeout: 1d
+                  spec:
+                    approvalMessage: |
+                      Terraform Plan completed successfully.
+                      Please review the plan and approve to continue.
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+                      userGroups:
+                        - account._account_all_users
+    - stage:
+        name: Terraform_Apply
+        identifier: Terraform_Apply
+        type: CI
+        spec:
+          cloneCodebase: false
+          execution:
+            steps:
               - step:
                   type: Run
                   name: Terraform Apply
