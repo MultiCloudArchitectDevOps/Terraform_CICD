@@ -14,8 +14,8 @@ pipeline:
             branch: main
   stages:
     - stage:
-        name: Terraform_Plan
-        identifier: Terraform_Plan
+        name: Terraform_Init
+        identifier: Terraform_Init
         type: CI
         spec:
           cloneCodebase: true
@@ -37,6 +37,33 @@ pipeline:
                       pwd
                       ls -la
                       find . -name "*.tf"
+                      terraform init -input=false
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+    - stage:
+        name: Terraform_Plan
+        identifier: Terraform_Plan
+        type: CI
+        spec:
+          cloneCodebase: true
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Terraform Init
+                  identifier: terraform_init_plan
+                  spec:
+                    shell: Sh
+                    image: hashicorp/terraform:1.8.5
+                    envVariables:
+                      AWS_ACCESS_KEY_ID: <+secrets.getValue("AWS_ACCESS_KEY_ID")>
+                      AWS_SECRET_ACCESS_KEY: <+secrets.getValue("AWS_SECRET_ACCESS_KEY")>
+                      AWS_DEFAULT_REGION: us-east-1
+                    command: |
                       terraform init -input=false
               - step:
                   type: Run
